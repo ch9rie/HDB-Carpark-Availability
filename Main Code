@@ -1,0 +1,227 @@
+#Paths of the files given for the assignment
+cp_info_path = "C:\\Users\\franc\\OneDrive\\Desktop\\PRG1\\ASSIGNMENT\\carpark-information.csv"
+cp_avail_1_path = "C:\\Users\\franc\\OneDrive\\Desktop\\PRG1\\ASSIGNMENT\\carpark-availability-v1.csv"
+cp_avail_2_path = "C:\\Users\\franc\\OneDrive\\Desktop\\PRG1\\ASSIGNMENT\\carpark-availability-v2.csv"
+
+with open(cp_info_path, 'r') as info1: #Reads file containing carpark info
+    cp_info_data = info1.read().split('\n') #splits the file for each line, where each line is a list 
+
+cp_info = {} #Converts the information into a dictionary; where the cp no. is the key, and the cp details, in a list, is the value
+for i in range(len(cp_info_data)):
+    cp_info_data[i] = cp_info_data[i].replace('"','').split(',',3) #Splits each line of the file into the cp no., cp type, parking type, and address
+    values = [] #temporary list to store each line and subsequently each cp's information
+    for j in range(1,len(cp_info_data[i])):
+        values.append(cp_info_data[i][j]) #adds info into the temporary list
+        cp_info[cp_info_data[i][0]] = values #adds the list into a dict, where the cp no is the key and the cp's info (stored in a list) is the value
+                                             #e.g. cp_info = {'ACB':[BASEMENT CAR PARK, ELECTRONIC PARKING, BLK 270/271 ALBERT CENTRE BASEMENT CAR PARK],...]
+
+while True: #Default menu displaying all the options, while loop so that the menu and prompt pops up after an option is executed
+    print('\nMENU\n====\n[1] Display Total Number of Carparks in \'carpark-information.csv\'\
+    \n[2] Display All Basement Carparks in \'carpark-information-csv\'\
+    \n[3] Read Carpark Availability Data File\
+    \n[4] Print Total Number of Carparks in the File read in [3]*\
+    \n[5] Display Carparks Without Available Lots*\
+    \n[6] Display Carparks With At Least x% Available Lots*\
+    \n[7] Display Addresses of Carparks With At Least x% Available Lots*\
+    \n[8] Display Advanced Features\
+    \n[0] Exit\
+    \n* User can only choose this option after option 3 is done.')
+
+    try:
+        option = int(input('\nEnter your option: ')) #Prompts user for option
+
+        if option == 0: #Exits the program
+            break
+
+        elif option == 1:
+            print('\nOption 1: Display Total Number of Carparks in \'carpark-information-csv\'\
+                \nTotal Number of carparks in \'carpark-information-csv\': {}'.format(len(cp_info)-1)) #-1 due to the header of the file
+            pass #goes back to menu and prompt
+
+        elif option == 2:
+            print('\nOption 2: Display All Basement Carparks in \'carpark-information-csv\'\
+        \n{:<10}{:>15}{:>15}'.format('Carpark Number',cp_info['Carpark Number'][0],cp_info['Carpark Number'][2])) #Header with proper alignment and formatting
+            count = 0 #to count the number of basement carparks found in the file
+            for key in cp_info:
+                if cp_info[key][0]=='BASEMENT CAR PARK': #checks the first element of the value list, which contains the carpark type (BASEMENT/MULTI-STOREY/SURFACE)
+                    count += 1 #adds 1 for every basement carpark found
+                    print('{:<17}{:20}{:}'.format(key,cp_info[key][0],cp_info[key][2])) #Prints each carpark and the carpark's information in tabular form with proper aligninment
+            print('\nTotal number: ',count) #Prints the number of basement carparks counted
+            pass #goes back to menu and prompt
+
+        elif option == 3:
+            print('\nOption 3: Read Carpark Availability Data File') #tells user which option they have selected
+            file = str(input('\nEnter the file name: ')) #prompts the user for the file to be read
+            if file == 'carpark-availability-v1.csv' or file == 'carpark-availability-v2.csv': #the only two files that contains valid info and can be read
+                if file == 'carpark-availability-v1.csv': #Checks if user entered file carpark-availability-v1.csv
+                    with open(cp_avail_1_path, 'r') as info2: #opens the file and reads it
+                        cp_avail = info2.read().split('\n') #splits each line of the file, where the data in the file is a list, and each line is list nested in it.
+                elif file == 'carpark-availability-v2.csv': #Checks if user entered file carpark-availability-v2.csv
+                    with open(cp_avail_2_path, 'r') as info2: #opens and reads the file
+                        cp_avail = info2.read().split('\n') #splits each line of the file, where the data in the file is a list, and each line is list nested in it.
+                print(f'\n{cp_avail[0]}') #prints the timestamp, which is the first line of the csv files, and hence the first nested list (which contains only 1 element)
+                for i in range(len(cp_avail)): #i realised that this step is crucial in subsequent options, so i implemented it here so that the program is more efficient
+                    cp_avail[i] = cp_avail[i].split(',') #splits the data in each nested list by separator ',' so that the info (cp no., total lots, lots available) will be 3 separate elements in the list
+                for i in range(2,len(cp_avail)-1): #goes through every nested list in cp_avail
+                    try:
+                        percentage_avail = (int(cp_avail[i][2])/int(cp_avail[i][1]))*100 #calculates the percentage of available lots for each cp
+                    except ZeroDivisionError:
+                        percentage_avail = 0 #if the no. of lots available is 0, the % is 0
+                    cp_avail[i].append(percentage_avail)
+            else:                                        #e.g. cp_avail =[...['HE12', 105, 41],['HLM', 583, 42],...]
+                print('\nThe file name that you have entered is not valid.') #prints statement if the file user has entered is not one of the two and hence invalid
+            pass #goes back to menu and prompt
+
+        elif option == 4:
+            try:
+                print('\nOption 4: Print Total Number of Carparks in the File read in [3]\
+                \nTotal Number of Carparks in the File: {}'.format(len(cp_avail)-3)) #subtracts the number of irrelevant nested lists (containing timestamp, header, blank) so that only relevant lines are counted
+            except NameError:
+                print('Option 3 has to be executed before this option.')
+            pass #returns to menu and prompt
+
+        elif option == 5:
+            try:
+                print('\nOption 5: Display Carparks Without Available Lots')
+                count = 0 #counts the number of carparks indentifies has 0 available lots
+                for i in range(2,len(cp_avail)-1): #excludes timestamp and header from the search #-1 to avoid IndexError
+                    if int(cp_avail[i][2]) == 0: #check if the carpark's no. of available lots (stored in the 3rd elements of each nested list) is 0 
+                        print('Carpark number: ',cp_avail[i][0]) #the first element of each nested list contains the cp no.
+                        count += 1 #adds 1 to the count for each carpark identifies
+                print('Total number: ',count) #displays the number of carparks counted
+            except NameError:
+                print('Option 3 has to be executed before this option.')
+            pass #returns to menu and prompt
+
+        elif option == 6:
+            try:
+                count = 0 #counts the number of carparks which has equal to or more than the % inputed by user
+                print('\nOption 6: Display Carparks With At Least x% Available Lots')
+                try:
+                    percentage = int(input('Enter the percentage required: ')) #prompts user for percentage required
+                    print('{:<10}{:>15}{:>20}{:>16}'.format(cp_avail[1][0],cp_avail[1][1],cp_avail[1][2],'Percentage')) #prints header with proper alignment and formatting
+                    for i in range(2,len(cp_avail)-1): #goes through every nested list in cp_avail
+                        if cp_avail[i][3]>=percentage:
+                            print('{:<10}{:>19}{:>20}{:>16.1f}'.format(cp_avail[i][0],cp_avail[i][1],cp_avail[i][2],\
+                                                cp_avail[i][3])) #prints out each of the cp's info (including percentage) of the carparks that fulfill the required % with proper alignment
+                            count += 1 #adds one to the count for every cp that fulfills the % required                             
+                    print('Total number:', count) #prints out the no. of cps counted
+                except ValueError:
+                    print('\nPlease input an integer') #error message pops up if user inputs any value that is not int e.g., str, float, bool
+            except NameError:
+                print('Option 3 has to be executed before this option.')
+            pass #returns to menu and prompt
+
+        elif option == 7:
+            try:
+                count = 0 #counts the number of carparks which has equal to or more than the % inputed by user
+                print('\nOption 7: Display Addresses of Carparks With At Least x% Available Lots')
+                try:
+                    percentage = int(input('Enter the percentage required: ')) #prompts user for percentage required
+                    print('{:<10}{:>15}{:>20}{:>16}{:>13}'.format(cp_avail[1][0],cp_avail[1][1],cp_avail[1][2],'Percentage'\
+                                                  ,'Address')) #prints header with proper alignment and formatting
+                    for i in range(2,len(cp_avail)-1): #goes through every nested list in cp_avail
+                        if cp_avail[i][3]>=percentage: #checks if the percentage of available lots for each cp is more than or equals to the percentage required
+                            print('{:<10}{:>19}{:>20}{:>16.1f}{:>6}{}'.format(cp_avail[i][0],cp_avail[i][1],cp_avail[i][2],\
+                                                cp_avail[i][3],' ',cp_info[cp_avail[i][0]][2])) #prints out each of the cp's info (including percentage) of the carparks that fulfill 
+                            count += 1  #adds one to the count for every cp that fulfills the % required     #the required % with proper alignment, with addresses this time
+                    print('Total number:', count) #prints out the no. of cps counted
+                except ValueError:
+                    print('\nPlease input an integer') #error message pops up if user inputs any value that is not int e.g., str, float, bool
+            except:
+                print('Option 3 has to be executed before this option.')
+            pass #returns to menu and prompt
+            
+
+        elif option == 8: #prints out menu containing the advanced options
+            print('\nADVANCED FEATURES MENU\n======================\
+        \n[9] Display All Carparks at Given Location*\
+        \n[10] Display Carpark With The Most Parking Lots*\
+        \n[11] Create an Output File with Carpark Availability with Addresses and Sort by Lots Available*\
+        \n* User can only choose this option after option 3 is done.')
+            pass #returns to menu and prompt
+
+        elif option == 9:
+            try:
+                print('\nOption 9: Display All Carparks at Given Location')
+                location = str(input('Enter location: '))#prompts user for location
+                location = location.upper() #capitalises each lowercase letters of the input as all the info in the csv file are in uppercase letters)
+                location_found = False
+                for key in cp_info:
+                    if location in cp_info[key][2]:
+                        if not location_found:
+                            print('{:<10}{:>15}{:>20}{:>16}{:>13}'.format(cp_avail[1][0], cp_avail[1][1], cp_avail[1][2], 'Percentage', 'Address'))
+                            location_found = True
+
+                    for i in range(len(cp_avail)):
+                         if cp_avail[i][0] == key:
+                            print('{:<10}{:>19}{:>20}{:>16.1f}{:>6}{}'.format(key, cp_avail[i][1], cp_avail[i][2], cp_avail[i][3], ' ', cp_info[key][2]))
+                            location_found = True
+
+                if not location_found:
+                     print('No location found.')
+            except NameError:
+                print('Option 3 has to be executed before this option.')
+            pass
+
+        elif option == 10:
+            try:
+                print('\nOption 10: Display Carpark with the Most Parking Lots')
+                cp_lots = {}
+                lots = []
+                for i in range(2,len(cp_avail)-1):
+                    cp_lots[cp_avail[i][0]] = [int(cp_avail[i][1]),int(cp_avail[i][2]),int(cp_avail[i][3])]
+                    lots.append(int(cp_avail[i][1]))
+                lots.sort(reverse = True)
+                most_lots = lots[0]
+                for key, value in cp_lots.items():
+                    if value[0] == most_lots:
+                        print(f'\nCarpark No.: {key}\nCarpark Type: {cp_info[key][0]}\
+    \nParking Type: {cp_info[key][1]}\nCarpark Address: {cp_info[key][2]}\nTotal Lots: {value[0]}\
+    \nLots Available: {value[1]}\nPercentage Available: {value[2]}%')
+            except NameError:
+                print('Option 3 has to be executed before this option.')
+            pass
+            
+                    
+
+        elif option == 11:
+            try:
+                print('\nOption 11: Create an Output File with Carpark Availability with Address')
+                data = [cp_avail[0],['Carpark Number','Total Lots','Lots Available','Address']]
+                cp_avail.pop(0)
+                cp_avail.pop(0)
+                for i in range(len(cp_avail)):
+                    if cp_avail[i][0] in cp_info:
+                        cp_avail[i].append(cp_info[cp_avail[i][0]][2])
+                    else:
+                        cp_avail[i].append('Address not found')
+                for i in range(len(cp_avail)):
+                    if len(cp_avail[i]) > 5:
+                        cp_avail[i].pop(4) #checks if the list has been passed through option 10, where there will be a duplicate value of 'Lots Available'. This line removes that.
+                for i in range(len(cp_avail)):
+                    if len(cp_avail[i])<3:
+                        cp_avail.pop(i)
+                for i in range(len(cp_avail)):   
+                    cp_avail[i][2]=int(cp_avail[i][2])
+                cp_avail.sort(key = lambda item:item[2])
+                for i in range(len(cp_avail)):
+                    data.append(cp_avail[i])
+                try:
+                    import csv
+                    output_file = "C:\\Users\\franc\\OneDrive\\Desktop\\PRG1\\ASSIGNMENT\\carpark-availability-with-addresses.csv"
+                    with open(output_file, 'w', newline='') as file:
+                        writer = csv.writer(file)
+                        writer.writerows(data)
+                        print('The output file has been created successfully!')
+                except PermissionError:
+                    print('\nAccess to this file has been denied. Please try again.')
+            except NameError:
+                print('Option 3 has to be executed before this option.')
+            pass
+            
+
+        else:
+            print('Please choose a valid option from the menu.')
+    except ValueError:
+        print('Please choose a valid option from the menu.')
